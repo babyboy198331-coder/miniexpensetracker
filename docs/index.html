@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mini Expense Tracker</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --border: #334155;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --accent: #6366f1;
+    --accent-hover: #4f46e5;
+    --danger: #ef4444;
+    --danger-hover: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 16px;
+  }
+  .wrap { width: 100%; max-width: 640px; }
+  h1 { font-size: 22px; margin: 0 0 24px; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .panel h2 { margin: 0 0 16px; font-size: 16px; color: var(--muted); }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  input, select {
+    width: 100%;
+    padding: 9px 10px;
+    margin-bottom: 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: #0b1220;
+    color: var(--text);
+    font-size: 14px;
+  }
+  button {
+    border: none;
+    border-radius: 6px;
+    padding: 9px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    color: white;
+    background: var(--accent);
+  }
+  button:hover { background: var(--accent-hover); }
+  button.danger { background: var(--danger); padding: 5px 10px; font-size: 12px; }
+  button.danger:hover { background: var(--danger-hover); }
+  button.link {
+    background: none;
+    color: var(--accent);
+    padding: 0;
+    text-decoration: underline;
+    font-size: 13px;
+  }
+  button.link:hover { background: none; color: var(--accent-hover); }
+  .row { display: flex; gap: 16px; }
+  .row > * { flex: 1; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .tabs button { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .tabs button.active { background: var(--accent); color: white; border-color: var(--accent); }
+  .error { color: var(--danger); font-size: 13px; margin: -4px 0 12px; min-height: 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 500; }
+  .empty { color: var(--muted); font-size: 14px; padding: 8px 0; }
+  .summary-grid { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 8px; }
+  .summary-card {
+    background: #0b1220;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    flex: 1;
+    min-width: 120px;
+  }
+  .summary-card .label { font-size: 12px; color: var(--muted); }
+  .summary-card .value { font-size: 18px; font-weight: 600; margin-top: 2px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+  .topbar span { color: var(--muted); font-size: 14px; }
+  #app-screen { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="auth-screen">
+    <h1>Mini Expense Tracker</h1>
+    <div class="panel">
+      <div class="tabs">
+        <button id="tab-login" class="active">Log in</button>
+        <button id="tab-register">Register</button>
+      </div>
+
+      <form id="login-form">
+        <div id="login-message" style="color:#4ade80; font-size:13px; margin:-4px 0 12px; min-height:16px"></div>
+        <label for="login-email">Email</label>
+        <input id="login-email" type="email" required />
+        <label for="login-password">Password</label>
+        <input id="login-password" type="password" required />
+        <div class="error" id="login-error"></div>
+        <button type="submit">Log in</button>
+        <button type="button" class="link" id="show-forgot-link" style="margin-left:12px">Forgot password?</button>
+      </form>
+
+      <form id="register-form" style="display:none">
+        <label for="register-email">Email</label>
+        <input id="register-email" type="email" required />
+        <label for="register-password">Password</label>
+        <input id="register-password" type="password" required minlength="4" />
+        <div class="error" id="register-error"></div>
+        <button type="submit">Create account</button>
+      </form>
+
+      <form id="forgot-form" style="display:none">
+        <p style="color:var(--muted); font-size:13px; margin-top:0">
+          Enter your account email and we'll generate a reset link.
+        </p>
+        <label for="forgot-email">Email</label>
+        <input id="forgot-email" type="email" required />
+        <div class="error" id="forgot-error"></div>
+        <button type="submit">Send reset link</button>
+        <button type="button" class="link" id="back-to-login-from-forgot" style="margin-left:12px">Back to log in</button>
+      </form>
+
+      <div id="forgot-result" style="display:none">
+        <p id="forgot-message" style="font-size:14px"></p>
+        <div id="demo-token-box" style="display:none; background:#0b1220; border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:16px; font-size:12px; color:var(--muted); word-break:break-all">
+          <strong style="color:var(--text)">Demo mode:</strong> there's no real email being sent, so here's the reset token directly —
+          <code id="demo-token-value" style="display:block; margin-top:6px; color:var(--text)"></code>
+        </div>
+        <button type="button" id="proceed-to-reset-btn">Continue to reset password</button>
+        <button type="button" class="link" id="back-to-login-from-forgot-result" style="margin-left:12px">Back to log in</button>
+      </div>
+
+      <form id="reset-form" style="display:none">
+        <label for="reset-token">Reset token</label>
+        <input id="reset-token" type="text" required />
+        <label for="reset-new-password">New password</label>
+        <input id="reset-new-password" type="password" required minlength="4" />
+        <div class="error" id="reset-error"></div>
+        <button type="submit">Reset password</button>
+        <button type="button" class="link" id="back-to-login-from-reset" style="margin-left:12px">Back to log in</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="app-screen">
+    <div class="topbar">
+      <h1 style="margin:0">Mini Expense Tracker</h1>
+      <div>
+        <span id="user-email"></span>
+        <button class="link" id="logout-btn" style="margin-left:10px">Log out</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Summary</h2>
+      <div class="summary-grid" id="summary-grid"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Add an expense</h2>
+      <form id="expense-form">
+        <div class="row">
+          <div>
+            <label for="expense-amount">Amount</label>
+            <input id="expense-amount" type="number" step="0.01" min="0.01" required />
+          </div>
+          <div>
+            <label for="expense-category">Category</label>
+            <input id="expense-category" type="text" required placeholder="e.g. groceries" />
+          </div>
+        </div>
+        <label for="expense-description">Description (optional)</label>
+        <input id="expense-description" type="text" placeholder="e.g. Trader Joe's" />
+        <div class="error" id="expense-error"></div>
+        <button type="submit">Add expense</button>
+      </form>
+    </div>
+
+    <div class="panel">
+      <h2>Your expenses</h2>
+      <div id="expense-list"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // When running locally (file:// or localhost) this talks to your local backend.
+  // When deployed (e.g. GitHub Pages), set this to your live backend URL
+  // (for example, your Render service: "https://your-app.onrender.com").
+  const API_BASE = location.hostname === "localhost" || location.hostname === "127.0.0.1" || location.protocol === "file:"
+    ? "http://localhost:3000"
+    : "https://miniexpensetracker-0911.onrender.com";
+
+  // ---- token storage ----
+  function getTokens() {
+    return {
+      accessToken: localStorage.getItem("accessToken"),
+      refreshToken: localStorage.getItem("refreshToken"),
+      email: localStorage.getItem("userEmail"),
+    };
+  }
+  function setTokens({ accessToken, refreshToken, email }) {
+    if (accessToken) localStorage.setItem("accessToken", accessToken);
+    if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
+    if (email) localStorage.setItem("userEmail", email);
+  }
+  function clearTokens() {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("userEmail");
+  }
+
+  // ---- API helper with automatic refresh-on-401 ----
+  async function apiFetch(path, options = {}, isRetry = false) {
+    const { accessToken } = getTokens();
+    const headers = Object.assign(
+      { "Content-Type": "application/json" },
+      options.headers || {},
+      accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
+    );
+
+    const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+
+    if (res.status === 401 && !isRetry) {
+      const refreshed = await tryRefresh();
+      if (refreshed) return apiFetch(path, options, true);
+    }
+
+    return res;
+  }
+
+  async function tryRefresh() {
+    const { refreshToken } = getTokens();
+    if (!refreshToken) return false;
+
+    const res = await fetch(`${API_BASE}/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (!res.ok) {
+      clearTokens();
+      showAuthScreen();
+      return false;
+    }
+
+    const data = await res.json();
+    setTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken });
+    return true;
+  }
+
+  // ---- screens ----
+  function showAuthScreen() {
+    document.getElementById("auth-screen").style.display = "block";
+    document.getElementById("app-screen").style.display = "none";
+  }
+  function showAppScreen() {
+    document.getElementById("auth-screen").style.display = "none";
+    document.getElementById("app-screen").style.display = "block";
+    document.getElementById("user-email").textContent = getTokens().email || "";
+    refreshExpenses();
+  }
+
+  // ---- auth panel view switching ----
+  // Exactly one of these is visible at a time. The tabs row only applies to
+  // login/register; forgot/reset/result are reached via links instead.
+  function showAuthView(view) {
+    const views = {
+      login: "login-form",
+      register: "register-form",
+      forgot: "forgot-form",
+      "forgot-result": "forgot-result",
+      reset: "reset-form",
+    };
+    Object.values(views).forEach((id) => {
+      document.getElementById(id).style.display = "none";
+    });
+    document.getElementById(views[view]).style.display = "block";
+
+    if (view !== "login") {
+      document.getElementById("login-message").textContent = "";
+    }
+
+    const onTabs = view === "login" || view === "register";
+    document.querySelector(".tabs").style.display = onTabs ? "flex" : "none";
+    if (onTabs) {
+      document.getElementById("tab-login").classList.toggle("active", view === "login");
+      document.getElementById("tab-register").classList.toggle("active", view === "register");
+    }
+  }
+
+  document.getElementById("tab-login").addEventListener("click", () => showAuthView("login"));
+  document.getElementById("tab-register").addEventListener("click", () => showAuthView("register"));
+  document.getElementById("show-forgot-link").addEventListener("click", () => showAuthView("forgot"));
+  document.getElementById("back-to-login-from-forgot").addEventListener("click", () => showAuthView("login"));
+  document.getElementById("back-to-login-from-forgot-result").addEventListener("click", () => showAuthView("login"));
+  document.getElementById("back-to-login-from-reset").addEventListener("click", () => showAuthView("login"));
+
+  // ---- register ----
+  document.getElementById("register-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("register-email").value.trim();
+    const password = document.getElementById("register-password").value;
+    const errorEl = document.getElementById("register-error");
+    errorEl.textContent = "";
+
+    const res = await fetch(`${API_BASE}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      errorEl.textContent = data.error || "Registration failed";
+      return;
+    }
+
+    // auto-login after registering
+    await doLogin(email, password, errorEl);
+  });
+
+  // ---- login ----
+  document.getElementById("login-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("login-email").value.trim();
+    const password = document.getElementById("login-password").value;
+    const errorEl = document.getElementById("login-error");
+    await doLogin(email, password, errorEl);
+  });
+
+  async function doLogin(email, password, errorEl) {
+    errorEl.textContent = "";
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      errorEl.textContent = data.error || "Login failed";
+      return;
+    }
+
+    setTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken, email });
+    showAppScreen();
+  }
+
+  // ---- forgot password ----
+  let lastDemoResetToken = "";
+
+  document.getElementById("forgot-form").addEventListener("submit", async (e) => {
+    e.preventDefault()
