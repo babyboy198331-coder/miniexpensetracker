@@ -1,6 +1,8 @@
 # Mini Expense Tracker
 
-A small Express API (`backend/`) demonstrating register, login, bcrypt password hashing, JWT creation with refresh tokens, and protected routes — plus a plain HTML/JS frontend (`frontend/`) to use it from a browser.
+A small Express API (`backend/`) demonstrating register, login, bcrypt password hashing, JWT creation with refresh tokens, and protected routes — plus a plain HTML/JS frontend (`docs/`) to use it from a browser.
+
+The frontend lives in `docs/` instead of `frontend/` so it can be served directly by GitHub Pages (which only supports publishing from the repo root or a folder named `docs`).
 
 Data is stored in memory only — restarting the server clears everything. Swap `backend/data/store.js` for a real database later if you want to persist data.
 
@@ -23,13 +25,17 @@ The API runs on `http://localhost:3000` by default.
 The frontend is a single static HTML file with no build step or dependencies — just open it with a local server so the browser allows fetch requests to localhost cleanly:
 
 ```bash
-cd frontend
+cd docs
 npx serve .
 ```
 
 (`npx serve` will print a URL, usually `http://localhost:3000` is already taken by the API, so it'll pick something like `http://localhost:3001` — open that in your browser.) Opening `index.html` directly via `file://` also works in most browsers, but a local server is more reliable.
 
-Make sure the backend is running first — the frontend talks to it at `http://localhost:3000` (see the `API_BASE` constant near the top of `frontend/index.html` if you need to change the port).
+Make sure the backend is running first — the frontend talks to it at `http://localhost:3000` when run locally (see the `API_BASE` constant near the top of `docs/index.html` if you need to change the port). When deployed, `API_BASE` automatically points at the live backend instead.
+
+### Live deployment
+
+This project is also deployed live: the frontend is served via GitHub Pages from `docs/`, and the backend runs on Render. See `API_BASE` in `docs/index.html` and the `FRONTEND_ORIGIN` environment variable on the Render service for how the two are wired together.
 
 ## Using the UI
 
