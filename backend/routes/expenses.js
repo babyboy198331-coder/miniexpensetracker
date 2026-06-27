@@ -7,12 +7,12 @@ const router = express.Router();
 // All routes below require a valid JWT
 router.use(requireAuth);
 
-router.get("/", (req, res) => {
-  const expenses = store.findExpensesByUserId(req.user.id);
+router.get("/", async (req, res) => {
+  const expenses = await store.findExpensesByUserId(req.user.id);
   res.json(expenses);
 });
 
-router.post("/", (req, res) => {
+router.post("/", async (req, res) => {
   const { amount, category, description } = req.body;
 
   if (typeof amount !== "number" || amount <= 0) {
@@ -22,7 +22,7 @@ router.post("/", (req, res) => {
     return res.status(400).json({ error: "category is required" });
   }
 
-  const expense = store.createExpense({
+  const expense = await store.createExpense({
     userId: req.user.id,
     amount,
     category,
@@ -32,8 +32,8 @@ router.post("/", (req, res) => {
   res.status(201).json(expense);
 });
 
-router.get("/summary", (req, res) => {
-  const expenses = store.findExpensesByUserId(req.user.id);
+router.get("/summary", async (req, res) => {
+  const expenses = await store.findExpensesByUserId(req.user.id);
 
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
 
@@ -45,15 +45,15 @@ router.get("/summary", (req, res) => {
   res.json({ total, byCategory, count: expenses.length });
 });
 
-router.delete("/:id", (req, res) => {
+router.delete("/:id", async (req, res) => {
   const id = Number(req.params.id);
-  const expense = store.findExpenseById(id);
+  const expense = await store.findExpenseById(id);
 
   if (!expense || expense.userId !== req.user.id) {
     return res.status(404).json({ error: "Expense not found" });
   }
 
-  store.deleteExpenseById(id);
+  await store.deleteExpenseById(id);
   res.status(204).send();
 });
 
