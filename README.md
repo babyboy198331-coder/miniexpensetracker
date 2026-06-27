@@ -4,7 +4,7 @@ A small Express API (`backend/`) demonstrating register, login, bcrypt password 
 
 The frontend lives in `docs/` instead of `frontend/` so it can be served directly by GitHub Pages (which only supports publishing from the repo root or a folder named `docs`).
 
-Data is stored in memory only — restarting the server clears everything. Swap `backend/data/store.js` for a real database later if you want to persist data.
+Data is persisted in PostgreSQL (`backend/data/db.js` + `backend/data/store.js`) — users, expenses, refresh tokens, and password-reset tokens all survive a server restart. The schema (`CREATE TABLE IF NOT EXISTS ...`) is created automatically on startup, so there's no separate migration step to run.
 
 ## Setup
 
@@ -14,9 +14,11 @@ Data is stored in memory only — restarting the server clears everything. Swap 
 cd backend
 npm install
 cp .env.example .env
-# edit .env and set real values for JWT_SECRET and REFRESH_TOKEN_SECRET
+# edit .env and set real values for JWT_SECRET, REFRESH_TOKEN_SECRET, and DATABASE_URL
 npm start
 ```
+
+`DATABASE_URL` should point at a Postgres instance, e.g. `postgres://user:password@localhost:5432/expense_tracker` for a local database, or the connection string Render (or any other host) gives you for a managed instance. The app creates its own tables on startup, so an empty database is fine to start with.
 
 The API runs on `http://localhost:3000` by default.
 
@@ -35,7 +37,7 @@ Make sure the backend is running first — the frontend talks to it at `http://l
 
 ### Live deployment
 
-This project is also deployed live: the frontend is served via GitHub Pages from `docs/`, and the backend runs on Render. See `API_BASE` in `docs/index.html` and the `FRONTEND_ORIGIN` environment variable on the Render service for how the two are wired together.
+This project is also deployed live: the frontend is served via GitHub Pages from `docs/`, and the backend runs on Render with a Render-managed Postgres database. See `API_BASE` in `docs/index.html`, the `FRONTEND_ORIGIN` environment variable, and the `DATABASE_URL` environment variable on the Render service for how it's all wired together.
 
 ## Using the UI
 
@@ -150,7 +152,6 @@ curl -X DELETE http://localhost:3000/expenses/1 \
 
 ## Next steps if you want to go further
 
-- Swap in-memory storage for SQLite or Postgres (this also makes refresh-token revocation survive a server restart).
 - Add rate limiting on `/auth/login` to slow down brute-force attempts.
 - Add input validation with a library like `zod` or `joi`.
 - Track refresh tokens per-device/session so a user can log out of one device without logging out everywhere.
