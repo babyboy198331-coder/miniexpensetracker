@@ -4,7 +4,7 @@ const cors = require("cors");
 
 const authRoutes = require("./routes/auth");
 const expenseRoutes = require("./routes/expenses");
-const { ensureSchema, pool } = require("./data/db");
+const { ensureSchema } = require("./data/db");
 
 const app = express();
 
@@ -25,21 +25,6 @@ app.use(cors(allowedOrigin ? { origin: allowedOrigin } : {}));
 app.use(express.json());
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));
-
-// Temporary diagnostic route — remove once the Postgres "relation does not
-// exist" issue is confirmed fixed. Reports which tables actually exist and
-// which database/user the pool is connected to.
-app.get("/debug/db", async (req, res) => {
-  try {
-    const tables = await pool.query(
-      "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name"
-    );
-    const ident = await pool.query("SELECT current_database() AS db, current_user AS usr");
-    res.json({ tables: tables.rows, identity: ident.rows[0] });
-  } catch (err) {
-    res.status(500).json({ error: err.message, code: err.code });
-  }
-});
 
 app.use("/auth", authRoutes);
 app.use("/expenses", expenseRoutes);
